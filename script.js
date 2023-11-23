@@ -1,96 +1,84 @@
-document.addEventListener('DOMContentLoaded', function () {
-    const tabela = document.querySelector(".tabela-js");
-  
-    axios.get(` http://10.109.142.63:5000/list`)
-        .then(function (resposta) {
-            getData(resposta.data);
+const tabela = document.querySelector('.tabela-js')
+const form = document.querySelector('.form-js')
+const BS = document.getElementById('B-S')
+const BE = document.getElementById('Editar')
+var ID = 0
+
+
+const dados = {}
+
+axios.get('http://127.0.0.1:5000/list').then((response) => {
+    getData(response.data)
+})
+    .catch(function (error) {
+        console.log(error)
+    })
+
+    
+function getData(data) {
+    data.map((item) => {
+        tabela.innerHTML += `
+            <tr>
+                <th scope="row">${item.ID}</th>
+                <td>${item.TAREFA}</td>
+                <td><button class="btn" type="button" data-bs-toggle="modal"
+                data-bs-target="#modalexcluir" onclick="excluir(${item.ID})"><span class="material-symbols-outlined text-danger">
+                delete
+                </span></button>
+                <button class="btn" type="button" data-bs-toggle="modal"
+                data-bs-target="#modaleditar" onclick="Editar(${item.TAREFA})"><span class="material-symbols-outlined text-success">
+                edit
+                </span></button></td>
+            </tr>
+            `
+    })
+}
+
+function Forms(){
+    const tarefa = document.getElementById("Tarefa1").value
+    if (tarefa.trim() !== ""){
+        const json = {Tarefa: tarefa}
+        axios.post('http://127.0.0.1:5000/add', json).then((response) => {
+            console.log("Tarefa adicionada com sucesso", response.Tarefa)
         })
         .catch(function (error) {
-            console.error(error);
-        });
-  
-    function getData(dados) {
-        tabela.innerHTML = dados.map(item => `
-        <tr>
-        <th scope="row">${item.ID}</th>
-        <td>${item.TAREFA}</td>
-        <td><button class="btn bg-white delete-btn" type="button" data-bs-toggle="modal" data-bs-target="#modalDel"><span class="material-symbols-outlined text-danger">
-        delete
-        </span></button> <button class="btn bg-white edit-btn" id="edit-tarefa-btn"  type="button" data-bs-toggle="modal" data-bs-target="#modalEdit"><span class="material-symbols-outlined text-success">
-        edit
-        </span></button></td>
-    </tr>`
-        ).join('');
-  
-        todos_Eventos();
-      };
-  
-    function todos_Eventos() {
-        document.querySelector("#add-tarefa").addEventListener("click", function () {
-            const tarefa = document.querySelector("#tarefa").value;
-            if (tarefa === "") {
-                alert("Digite uma tarefa!");
-                return;
-            }
-  
-            axios.post(` http://10.109.142.63:5000/add`, { Tarefa: tarefa })
-                .then(function () {
-                    loadTasks();
-                })
-                .catch(function (error) {
-                    console.error(error);
-                });
-          });
-  
-        document.querySelectorAll(".delete-btn").forEach(btn => {
-            btn.addEventListener("click", function (e) {
-                const id = e.target.parentElement.parentElement.firstElementChild.textContent;
-                axios.delete(` http://10.109.142.63:5000/delete/${id}`)
-                    .then(function () {
-                        loadTasks();
-                    })
-                    .catch(function (error) {
-                        console.error(error);
-                    });
-            });
-        });
-  
-        document.querySelector(".tabela-js").addEventListener("click", function (e) {
-            const editBtn = e.target.closest(".edit-btn");
-            if (editBtn) {
-                const row = editBtn.closest("tr");
-                const id = row.querySelector("th").textContent;
-                const tarefa = row.querySelector("td").textContent;
-                document.querySelector("#edit-tarefa").value = tarefa;
-            }
-        });
-  
-        document.querySelector("#edit-tarefa-btn").addEventListener("click", function () {
-            const tarefaupdate = document.querySelector("#edit-tarefa").value;
-            const id = document.querySelector(".edit-btn").parentElement.parentElement.firstElementChild.textContent;
-            
-            if (id) {
-                axios.put(` http://10.109.142.63:5000/${id}`, { Tarefa: tarefaupdate })
-                    .then(function () {
-                        loadTasks();
-                    })
-                    .catch(function (error) {
-                        console.error(error);
-                    })
-                    .finally(function () {
-                        id = null;
-                    });
-            }
-        });
-      }
-  
-    function loadTasks() {
-        axios.get(` http://10.109.142.63:5000/list`)
-            .then(function (resposta) {
-                getData(resposta.data);
-            })
-            .catch(function (error) {
-                console.error(error);
-            });
-          }
-      });
+            console.error("Ouve um erro na hora de acionar",error)
+        })
+
+    }
+}
+
+form.addEventListener('submit', function (event) {
+    event.preventDefault()
+    Forms()
+})
+function excluir(id){
+    ID = id
+}
+BS.addEventListener('click', ()=>{
+    const url = `http://127.0.0.1:5000/delete/${ID}`
+    axios.delete(url).then((response) => {
+        console.log("Excluido com sucesso", response.data)
+    })
+    .catch(function (error) {
+        console.error("Ouve um erro na hora de excluir",error)
+    })
+})
+var tarefaA;
+function Editar(Tarefa){
+    console.log(Tarefa)
+    tarefaA = Tarefa
+}
+console.log(tarefaA)
+
+BE.addEventListener('click', ()=>{
+    const input = document.getElementById("TarefaN").value
+    const url = `http://127.0.0.1:5000/update/${tarefaA}/${input}`
+    axios.put(url).then((response) => {
+        console.log("Atualizado com sucesso", response.data)
+    })
+    .catch(function (error) {
+        console.error("Ouve um erro na hora de atualizar",error)
+    })
+    
+})
